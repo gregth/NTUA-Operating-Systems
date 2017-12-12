@@ -48,7 +48,8 @@ void *increase_fn(void *arg)
 		if (USE_ATOMIC_OPS) {
 			/* ... */
 			/* You can modify the following line */
-			++(*ip);
+			//++(*ip);
+            __sync_fetch_and_add (ip, 1);
 			/* ... */
 		} else {
 			/* ... */
@@ -74,8 +75,8 @@ void *decrease_fn(void *arg)
 		if (USE_ATOMIC_OPS) {
 			/* ... */
 			/* You can modify the following line */
-			--(*ip);
-			/* ... */
+			//--(*ip);
+            __sync_fetch_and_sub (ip, 1);
 		} else {
 			/* ... */
             pthread_mutex_lock(&lock);

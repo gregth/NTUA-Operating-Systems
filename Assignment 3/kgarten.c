@@ -5,8 +5,8 @@
  * Bad things happen if teachers and children
  * are not synchronized properly.
  *
- * 
- * Author: 
+ *
+ * Author:
  * Vangelis Koukis <vkoukis@cslab.ece.ntua.gr>
  *
  * Additional Authors:
@@ -24,7 +24,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-/* 
+/*
  * POSIX thread functions do not return error numbers in errno,
  * but in the actual return value of the function call instead.
  * This macro helps with error reporting in this case.
@@ -35,16 +35,16 @@
 /* A virtual kindergarten */
 struct kgarten_struct {
 
-	/* 
+	/*
 	 * Here you may define any mutexes / condition variables / other variables
 	 * you may need.
 	 */
 
-	/* ... */
+    pthread_cond_t enough_teachers;
 
 	/*
 	 * You may NOT modify anything in the structure below this
-	 * point. 
+	 * point.
 	 */
 	int vt;
 	int vc;
@@ -145,7 +145,7 @@ void bad_thing(int thrid, int children, int teachers)
 		teachers, children);
 
 	/* Output everything in a single atomic call */
-	printf("%s", buf);
+    printf("%s", buf);
 }
 
 void child_enter(struct thread_info_struct *thr)
@@ -158,7 +158,15 @@ void child_enter(struct thread_info_struct *thr)
 
 	fprintf(stderr, "THREAD %d: CHILD ENTER\n", thr->thrid);
 
+    /*
+     * While Loop for spurious wakeups
+     * https://stackoverflow.com/questions/8594591/why-does-pthread-cond-wait-have-spurious-wakeups
+     */
+
 	pthread_mutex_lock(&thr->kg->mutex);
+    while (thr->kg->vc >= thr->kg->vt * thr->kg->ratio) {
+        pthread_cond_wait(&thr->kg->enough_teachers, &thr->kg->mutex);
+    }
 	++(thr->kg->vc);
 	pthread_mutex_unlock(&thr->kg->mutex);
 }
@@ -173,9 +181,10 @@ void child_exit(struct thread_info_struct *thr)
 	}
 
 	fprintf(stderr, "THREAD %d: CHILD EXIT\n", thr->thrid);
-	
+
 	pthread_mutex_lock(&thr->kg->mutex);
 	--(thr->kg->vc);
+    pthread_cond_broadcast(&thr->kg->enough_teachers);
 	pthread_mutex_unlock(&thr->kg->mutex);
 }
 
@@ -191,6 +200,7 @@ void teacher_enter(struct thread_info_struct *thr)
 
 	pthread_mutex_lock(&thr->kg->mutex);
 	++(thr->kg->vt);
+    pthread_cond_broadcast(&thr->kg->enough_teachers);
 	pthread_mutex_unlock(&thr->kg->mutex);
 }
 
@@ -205,6 +215,9 @@ void teacher_exit(struct thread_info_struct *thr)
 	fprintf(stderr, "THREAD %d: TEACHER EXIT\n", thr->thrid);
 
 	pthread_mutex_lock(&thr->kg->mutex);
+    while (thr->kg->vc > (thr->kg->vt - 1) * thr->kg->ratio) {
+        pthread_cond_wait(&thr->kg->enough_teachers, &thr->kg->mutex);
+    }
 	--(thr->kg->vt);
 	pthread_mutex_unlock(&thr->kg->mutex);
 }
@@ -231,7 +244,7 @@ void verify(struct thread_info_struct *thr)
 }
 
 
-/* 
+/*
  * A single thread.
  * It simulates either a teacher, or a child.
  */
@@ -242,7 +255,7 @@ void *thread_start_fn(void *arg)
 	char *nstr;
 
 	fprintf(stderr, "Thread %d of %d. START.\n", thr->thrid, thr->thrcnt);
-	
+
 	nstr = thr->is_child ? "Child" : "Teacher";
 	for (;;) {
 		fprintf(stderr, "Thread %d [%s]: Entering.\n", thr->thrid, nstr);
@@ -250,7 +263,7 @@ void *thread_start_fn(void *arg)
 			child_enter(thr);
 		else
 			teacher_enter(thr);
-	
+
 		fprintf(stderr, "Thread %d [%s]: Entered.\n", thr->thrid, nstr);
 
 		/*
@@ -284,7 +297,7 @@ void *thread_start_fn(void *arg)
 	}
 
 	fprintf(stderr, "Thread %d of %d. END.\n", thr->thrid, thr->thrcnt);
-	
+
 	return NULL;
 }
 
@@ -315,7 +328,7 @@ int main(int argc, char *argv[])
 
 
 	/*
-	 * Initialize kindergarten and random number generator 
+	 * Initialize kindergarten and random number generator
 	 */
 	srand(time(NULL));
 
@@ -329,6 +342,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+    ret = pthread_cond_init(&kg->enough_teachers, NULL);
 	/* ... */
 
 	/*

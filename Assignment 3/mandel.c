@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <signal.h>
 
 #include "mandel-lib.h"
 
@@ -144,6 +145,12 @@ void *thread_function(void* line_arg) {
     pthread_exit(0);
 }
 
+void int_handler(int signum) {
+    printf("Caught SIGINT signal! Reseting terminal color and exiting!\n");
+	reset_xterm_color(1);
+    exit(1);
+}
+
 int main(int argc, char* argv[])
 {
     // Check if sufficient arguments have been provided
@@ -154,6 +161,10 @@ int main(int argc, char* argv[])
 
     N_THREADS = atoi(argv[1]);
     printf("Running for N_THREADS = %d\n", N_THREADS);
+
+   struct sigaction action;
+   action.sa_handler = int_handler;
+   sigaction (SIGINT, &action, NULL);
 
     /* Allocate memory space for semaphores, initialize
      * them to 0, excpet for the semaphore[0] wich shoulde

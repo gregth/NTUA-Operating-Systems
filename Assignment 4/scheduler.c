@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		process *p = process_create((long)pid, argv[i]);
+		process *p = process_create(pid, argv[i]);
 		push(p_list, p);
 		printf("Process name: %s Cpid: %d is created.\n",
             argv[i], p->cpid);

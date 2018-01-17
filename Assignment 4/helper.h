@@ -1,9 +1,10 @@
 #ifndef helper_h
 #define helper_h
 
+#include <unistd.h>
 #include <stddef.h>
 typedef struct process_type {
-    long gpid;
+    pid_t gpid;
     int cpid;
     char * name;
     struct process_type * next;
@@ -15,7 +16,7 @@ typedef struct process_list_type {
     size_t size;
 } process_list;
 
-process * process_create(long pid, const char * name);
+process * process_create(pid_t pid, const char * name);
 
 int empty(process_list * l);
 

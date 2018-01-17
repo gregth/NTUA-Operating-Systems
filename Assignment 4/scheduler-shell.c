@@ -42,7 +42,27 @@ sched_kill_task_by_id(int id)
 static void
 sched_create_task(char *executable)
 {
-	assert(0 && "Please fill me!");
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        exit(1);
+    }
+    if (pid == 0) {
+        raise(SIGSTOP);
+        char filepath[TASK_NAME_SZ];
+        sprintf(filepath, "./%s", executable);
+        // TODO
+        char* args[] = {filepath, NULL};
+        if (execvp(filepath, args)) {
+            perror("execvp");
+            exit(1);
+        }
+    }
+
+    process *p = process_create((long)pid, executable);
+    push(p_list, p);
+    printf("Process name: %s Cpid: %d is created.\n",
+        executable, p->cpid);
 }
 
 /* Process requests by the shell.  */
@@ -73,7 +93,6 @@ static void
 sigalrm_handler(int signum)
 {
 	printf("Going to stop process with pid: %d", p_list->head->cpid);
-	// assert(0 && "Please fill me!");
 	kill(p_list->head->gpid, SIGSTOP);
 }
 

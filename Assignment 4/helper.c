@@ -3,7 +3,7 @@
 #include <string.h>
 #include "helper.h"
 
-process *process_create(long pid, const char *name) {
+process *process_create(pid_t pid, const char *name) {
 	static int id = 0;
 	process* new_process = (process*) malloc(sizeof(process));
 	if (new_process == NULL) {
@@ -154,7 +154,7 @@ void print_list(process_list* l) {
     process* tmp = l->head;
     printf("\n\nNOW PRINTING THE LIST\n");
     while (tmp != NULL) {
-        printf("--> pid: %ld, name: %s", tmp->gpid, tmp->name);
+        printf("--> pid: %ld, name: %s", (long)tmp->gpid, tmp->name);
         tmp = tmp->next;
     }
 }

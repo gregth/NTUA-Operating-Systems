@@ -6,7 +6,7 @@
 
 CC = gcc
 #CFLAGS = -Wall -g
-CFLAGS = -Wall -O2 -g
+CFLAGS = -Wall -O2 -g -ggdb -ggdb3
 
 all: scheduler scheduler-shell shell prog execve-example strace-test sigchld-example
 

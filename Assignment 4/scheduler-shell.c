@@ -24,7 +24,7 @@ process_list* p_list;
 static void
 sched_print_tasks(void)
 {
-	assert(0 && "Please fill me!");
+    print_list(p_list);
 }
 
 /* Send SIGKILL to a task determined by the value of its

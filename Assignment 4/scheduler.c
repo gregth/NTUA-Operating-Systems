@@ -19,18 +19,13 @@
 
 process_list* p_list;
 
-void free_process(process* p) {
-    free(p->name);
-    free(p);
-}
-
 /*
  * SIGALRM handler
  */
 static void
 sigalrm_handler(int signum)
 {
-	printf("Going to stop process with pid: %d", p_list->head->cpid);
+	printf("Going to stop process with cpid: %d\n", p_list->head->cpid);
 	// assert(0 && "Please fill me!");
 	kill(p_list->head->gpid, SIGSTOP);
 }
@@ -187,7 +182,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		process *p = process_create(pid, argv[i]);
+		process *p = process_create((long)pid, argv[i]);
 		push(p_list, p);
 		printf("Process name: %s Cpid: %d is created.\n",
             argv[i], p->cpid);

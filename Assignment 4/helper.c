@@ -3,7 +3,7 @@
 #include <string.h>
 #include "helper.h"
 
-process *process_create(int pid, const char *name) {
+process *process_create(long pid, const char *name) {
 	static int id = 0;
 	process* new_process = (process*) malloc(sizeof(process));
 	if (new_process == NULL) {
@@ -143,4 +143,18 @@ process_list* initialize_empty_list(void) {
 	p_list->tail = NULL;
 	p_list->size = 0;
     return p_list;
+}
+
+void free_process(process* p) {
+    free(p->name);
+    free(p);
+}
+
+void print_list(process_list* l) {
+    process* tmp = l->head;
+    printf("\n\nNOW PRINTING THE LIST\n");
+    while (tmp != NULL) {
+        printf("--> pid: %ld, name: %s", tmp->gpid, tmp->name);
+        tmp = tmp->next;
+    }
 }

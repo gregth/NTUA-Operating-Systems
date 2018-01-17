@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 typedef struct process_type {
-    int gpid;
+    long gpid;
     int cpid;
     char * name;
     struct process_type * next;
@@ -15,7 +15,7 @@ typedef struct process_list_type {
     size_t size;
 } process_list;
 
-process * process_create(int pid, const char * name);
+process * process_create(long pid, const char * name);
 
 int empty(process_list * l);
 
@@ -33,4 +33,7 @@ void clear(process_list * l);
 
 process_list* initialize_empty_list(void);
 
+void free_process(process* p);
+
+void print_list(process_list* l);
 #endif

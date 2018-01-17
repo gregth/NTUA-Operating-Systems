@@ -1,11 +1,11 @@
-nclude <stdlib.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "process_list.h"
+#include "helper.h"
 
 process *process_create(int pid, const char *name) {
 	static int id = 0;
-	process* new_process = process* malloc(sizeof(process));
+	process* new_process = (process*) malloc(sizeof(process));
 	if (new_process == NULL) {
 		printf("Memory allocation failed\n");
 		exit(1);
@@ -16,7 +16,7 @@ process *process_create(int pid, const char *name) {
 	new_process->gpid = pid;
 	new_process->cpid = id++;
 	new_process->next = NULL;
-	return new_p;
+	return new_process;
 }
 
 int empty (process_list* list) {
@@ -115,7 +115,7 @@ process* erase_proc_by_pid(process_list * l, int id) {
 	return NULL;
 }
 
-process* next_p(process_list * l) {
+process* get_next(process_list * l) {
 	if(empty(l)) {
 		printf("Empty list\n");
 		exit(1);
@@ -133,4 +133,14 @@ void clear(process_list * l) {
 		free(i->name);
 		free(i);
 	}
+}
+
+process_list* initialize_empty_list(void) {
+    // Initialize an empty list
+    process_list* p_list;
+	p_list = (process_list *) malloc (sizeof(process_list));
+	p_list->head = NULL;
+	p_list->tail = NULL;
+	p_list->size = 0;
+    return p_list;
 }

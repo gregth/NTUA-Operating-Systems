@@ -27,8 +27,10 @@ process * erase_proc_by_id(process_list * l, int id);
 
 process * erase_proc_by_pid(process_list * l, int id);
 
-process * next_p(process_list *l);
+process * get_next(process_list *l);
 
 void clear(process_list * l);
+
+process_list* initialize_empty_list(void);
 
 #endif

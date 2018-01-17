@@ -90,6 +90,46 @@ process * erase_proc_by_id(process_list * l, int id) {
 	return NULL;
 }
 
+process* get_proc_by_pid(process_list * l, int id) {
+	if (empty(l))
+		return NULL;
+
+	if (l->head->gpid == id)
+		 return l->head;
+
+	process * temp;
+	temp = l->head;
+
+	while (temp->next->gpid != id && temp->next != l->tail)
+		 temp = temp->next;
+
+	if (temp->next->gpid == id) {
+		return temp->next;
+	}
+
+	return NULL;
+}
+
+process* get_proc_by_id(process_list * l, int id) {
+	if (empty(l))
+		return NULL;
+
+	if (l->head->cpid == id)
+		 return l->head;
+
+	process * temp;
+	temp = l->head;
+
+	while (temp->next->cpid != id && temp->next != l->tail)
+		 temp = temp->next;
+
+	if (temp->next->cpid == id) {
+		return temp->next;
+	}
+
+	return NULL;
+}
+
 process* erase_proc_by_pid(process_list * l, int id) {
 	if (empty(l))
 		return NULL;
@@ -153,8 +193,10 @@ void free_process(process* p) {
 void print_list(process_list* l) {
     process* tmp = l->head;
     printf("\n\nNOW PRINTING THE LIST\n");
-    while (tmp != NULL) {
-        printf("--> pid: %ld, name: %s", (long)tmp->gpid, tmp->name);
+    while (tmp != l->tail) {
+        printf("--> pid: %ld, name: %s\n", (long)tmp->gpid, tmp->name);
         tmp = tmp->next;
     }
+    printf("--> pid: %ld, name: %s\n", (long)tmp->gpid, tmp->name);
+    printf("END OF THE LIST\n\n");
 }

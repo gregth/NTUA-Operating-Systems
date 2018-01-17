@@ -24,6 +24,10 @@ process * pop(process_list * l);
 
 void push(process_list * l, process * n);
 
+process* get_proc_by_pid(process_list * l, int id);
+
+process* get_proc_by_id(process_list * l, int id);
+
 process * erase_proc_by_id(process_list * l, int id);
 
 process * erase_proc_by_pid(process_list * l, int id);

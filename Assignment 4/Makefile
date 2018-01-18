@@ -19,7 +19,7 @@ scheduler-shell: scheduler-shell.o proc-common.o helper.o
 scheduler-priority: scheduler-priority.o proc-common.o helper.o
 	$(CC) -o scheduler-priority scheduler-priority.o proc-common.o helper.o
 
-scheduler-priority.o: scheduler.c
+scheduler-priority.o: scheduler-priority.c
 	$(CC) -o scheduler-priority.o -c scheduler-priority.c
 
 shell: shell.o proc-common.o helper.o

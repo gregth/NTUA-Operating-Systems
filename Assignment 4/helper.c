@@ -6,9 +6,10 @@
 
 #include "helper.h"
 
+// Creates a process struct, containing the name and pid of process
 process *process_create(pid_t pid, const char *name) {
     static int id = 0;
-    process* new_process = (process*) malloc(sizeof(process));
+    process* new_process = (process*)malloc(sizeof(process));
     if (new_process == NULL) {
         printf("Memory allocation failed\n");
         exit(1);
@@ -22,7 +23,8 @@ process *process_create(pid_t pid, const char *name) {
     return new_process;
 }
 
-int empty (process_list* list) {
+// Return 1 if list empty, else 0
+int empty(process_list* list) {
     if (list->head == NULL) {
         return 1;
     } else {
@@ -30,12 +32,12 @@ int empty (process_list* list) {
     }
 }
 
+// Removes and returns the head of the list
 process* pop(process_list* list) {
     if(empty(list)) {
         printf("Empty list\n");
         exit(1);
     }
-
     process* temp;
     if(list->head == list->tail) {
         temp = list->head;
@@ -52,6 +54,7 @@ process* pop(process_list* list) {
     }
 }
 
+// Puts a process at the tail of the list
 int  push(process_list* l, process* new_p) {
     if (empty(l)) {
         l->head = l->tail = new_p;
@@ -67,7 +70,8 @@ int  push(process_list* l, process* new_p) {
     return 1;
 }
 
-process * erase_proc_by_id(process_list * l, int id) {
+// Erases process with specified id
+process* erase_proc_by_id(process_list * l, int id) {
     if (empty(l))
         return NULL;
 
@@ -93,6 +97,7 @@ process * erase_proc_by_id(process_list * l, int id) {
     return NULL;
 }
 
+// Erases process with specified pid
 process* erase_proc_by_pid(process_list * l, int id) {
     if (empty(l))
         return NULL;
@@ -118,6 +123,7 @@ process* erase_proc_by_pid(process_list * l, int id) {
     return NULL;
 }
 
+// Returns pointer to process with specified pid
 process* get_proc_by_pid(process_list * l, int id) {
     if (empty(l))
         return NULL;
@@ -138,6 +144,7 @@ process* get_proc_by_pid(process_list * l, int id) {
     return NULL;
 }
 
+// Returns pointer to process with specified id
 process* get_proc_by_id(process_list * l, int id) {
     if (empty(l))
         return NULL;
@@ -158,7 +165,7 @@ process* get_proc_by_id(process_list * l, int id) {
     return NULL;
 }
 
-
+// Returns pointer to next process to be processed
 process* get_next(process_list * l) {
     if(empty(l)) {
         printf("Empty list\n");
@@ -182,6 +189,7 @@ process* my_get_next(process_list * l) {
     return l->head;
 }
 
+// Empties whole list
 void clear(process_list * l) {
     process * i;
     while(!empty(l)) {
@@ -191,6 +199,7 @@ void clear(process_list * l) {
     }
 }
 
+// Initializes an empty list
 process_list* initialize_empty_list(void) {
     // Initialize an empty list
     process_list* p_list;
@@ -201,6 +210,7 @@ process_list* initialize_empty_list(void) {
     return p_list;
 }
 
+// Frees allocated process struct memory
 void free_process(process* p) {
     free(p->name);
     free(p);
@@ -208,18 +218,22 @@ void free_process(process* p) {
 
 void print_list(process_list* l) {
     process* tmp = l->head;
-    printf("\n\nNOW PRINTING THE LIST");
-    while (tmp != l->tail) {
-        printf("--> pid: %ld, id: %d,  name: %s\n", (long)tmp->pid, tmp->id, tmp->name);
-        printf("TAIL: %d", l->tail->pid);
-        tmp = tmp->next;
+    printf("\n*************************************\n");
+    if (empty(l)) {
+        printf("Empty list\n");
+    } else {
+        while (tmp != l->tail) {
+            printf("--> pid: %ld, id: %d,  name: %s\n", (long)tmp->pid, tmp->id, tmp->name);
+            tmp = tmp->next;
+        }
+        if (tmp != NULL) {
+            printf("--> pid: %ld, id: %d,  name: %s\n", (long)tmp->pid, tmp->id, tmp->name);
+        }
     }
-    if (tmp != NULL) {
-        printf("--> pid: %ld, id: %d,  name: %s\n", (long)tmp->pid, tmp->id, tmp->name);
-    }
-    printf("END OF THE LIST\n\n");
+    printf("*************************************\n");
 }
 
+// Returns head element of high and low lists
 process* get_head_of_lists(process_list* l, process_list* h) {
     if (!empty(h)) {
         return h->head;
@@ -228,10 +242,12 @@ process* get_head_of_lists(process_list* l, process_list* h) {
     }
 }
 
+// Returns if empty high and low lists
 int empty_lists(process_list* l, process_list* h) {
     return (empty(l) && empty(h));
 }
 
+// Returns next element from lists low and high
 process* get_next_lists(process_list* l, process_list* h) {
     if (!empty(h)) {
         process* p = my_get_next(h);
@@ -241,6 +257,7 @@ process* get_next_lists(process_list* l, process_list* h) {
     }
 }
 
+// Pops next element from lists low and high
 process* pop_list(process_list* l, process_list* h) {
     if (!empty(h)) {
         return pop(h);
@@ -281,6 +298,7 @@ process* erase_proc_by_pid_list(process_list* l, process_list* h, int id) {
     return res;
 }
 
+// Moves process specified by id from list a into b
 int move_from_to(process_list* a, process_list* b, int id) {
     process* res = erase_proc_by_id(a, id);
     if (res == NULL) {
@@ -290,6 +308,9 @@ int move_from_to(process_list* a, process_list* b, int id) {
     return status;
 }
 
+/*
+ * Color setting
+ */
 void red () {
       printf("\033[1;31m");
 }

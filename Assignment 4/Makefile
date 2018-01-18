@@ -8,13 +8,19 @@ CC = gcc
 #CFLAGS = -Wall -g
 CFLAGS = -Wall -O2 -g -ggdb -ggdb3
 
-all: scheduler scheduler-shell shell prog execve-example strace-test sigchld-example
+all: scheduler scheduler-shell shell prog execve-example strace-test sigchld-example scheduler-priority
 
 scheduler: scheduler.o proc-common.o helper.o
 	$(CC) -o scheduler scheduler.o proc-common.o helper.o
 
 scheduler-shell: scheduler-shell.o proc-common.o helper.o
 	$(CC) -o scheduler-shell scheduler-shell.o proc-common.o helper.o
+
+scheduler-priority: scheduler-priority.o proc-common.o helper.o
+	$(CC) -o scheduler-priority scheduler-priority.o proc-common.o helper.o
+
+scheduler-priority.o: scheduler.c
+	$(CC) -o scheduler-priority.o -c scheduler-priority.c
 
 shell: shell.o proc-common.o helper.o
 	$(CC) -o shell shell.o proc-common.o helper.o

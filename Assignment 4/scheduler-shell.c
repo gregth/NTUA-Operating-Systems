@@ -33,8 +33,14 @@ sched_print_tasks(void)
 static int
 sched_kill_task_by_id(int id)
 {
-	assert(0 && "Please fill me!");
-	return -ENOSYS;
+    printf("\n\nNOW KILLING THE PROCESS: %d\n", id);
+    process* p = get_proc_by_id(p_list, id);
+    if (p == NULL) {
+        return -ENOSYS;
+    }
+    kill(p->gpid, SIGKILL);
+    printf("END OF MESSAGE\n\n");
+    return 0;
 }
 
 
@@ -42,6 +48,7 @@ sched_kill_task_by_id(int id)
 static void
 sched_create_task(char *executable)
 {
+    printf("\n\nNOW CREATING THE PROCESS FOR: %s\n", executable);
     pid_t pid = fork();
     if (pid < 0) {
         perror("fork");
@@ -59,10 +66,11 @@ sched_create_task(char *executable)
         }
     }
 
-    process *p = process_create((long)pid, executable);
+    process *p = process_create(pid, executable);
     push(p_list, p);
-    printf("Process name: %s Cpid: %d is created.\n",
+    printf("Process name: %s Cpid: %d was succesfully created.\n",
         executable, p->cpid);
+    printf("END OF MESSAGE\n\n");
 }
 
 /* Process requests by the shell.  */
@@ -92,7 +100,7 @@ process_request(struct request_struct *rq)
 static void
 sigalrm_handler(int signum)
 {
-	printf("Going to stop process with pid: %d", p_list->head->cpid);
+	printf("Going to stop process with pid: %d\n", p_list->head->cpid);
 	kill(p_list->head->gpid, SIGSTOP);
 }
 
@@ -105,61 +113,71 @@ sigchld_handler(int signum)
     int status;
     pid_t pid;
     //TODO Why wait -1?
-    pid = waitpid(-1, &status, WUNTRACED);
+    pid = waitpid(-1, &status, WUNTRACED | WNOHANG);
+    if (pid < 0) {
+        perror("waitpid");
+        exit(1);
+    }
+    if (pid != 0) {
 
-    // Check if head process changed status
-	if (pid == p_list->head->gpid) {
-		process *p;
+        // Check if head process changed status
+        if (pid == p_list->head->gpid) {
+            process *p;
 
-        // Process has stopped
-		if (WIFSTOPPED(status)) {
-			printf ("Process name: %s  Cpid: %d has been stopped.\n",
-                    p_list->head->name, p_list->head->cpid);
+            // Process has stopped
+            if (WIFSTOPPED(status)) {
+                printf ("Process name: %s  Cpid: %d has been stopped.\n",
+                        p_list->head->name, p_list->head->cpid);
+                p = get_next(p_list);
 
-			p = get_next(p_list);
+            // Process has exited
+            } else if (WIFEXITED(status) || WIFSIGNALED(status)) {
+                printf("Process name: %s  Cpid %d has been exited.\n",
+                        p_list->head->name, p_list->head->cpid);
 
-        // Process has exited
-		} else if (WIFEXITED(status)) {
-			printf("Process name: %s  Cpid %d has been exited.\n",
-                    p_list->head->name, p_list->head->cpid);
+                p = pop(p_list);
+                free_process(p);
+                if (empty(p_list)) {
+                    printf ("Process list is now empty...\n");
+                    exit(0);
+                }
+                p = p_list->head;
+            }
+            else {
+                printf("Process name: %s  Cpid %d has exited unexpectedly.\n",
+                        p_list->head->name, p_list->head->cpid);
 
-			p = pop(p_list);
-			free_process(p);
-			if (empty(p_list)) {
-				printf ("Process list is now empty...\n");
-				exit(0);
-			}
-			p = p_list->head;
-		}
-		else {
-			printf("Process name: %s  Cpid %d has exited unexpectedly.\n",
-                    p_list->head->name, p_list->head->cpid);
+                p = pop(p_list);
+                free_process(p);
+                if (empty(p_list)) {
+                    printf ("Process list is now empty...\n");
+                    exit(0);
+                }
+                p = p_list->head;
+            }
 
-			p = pop(p_list);
-			free_process(p);
-			if (empty(p_list)) {
-				printf ("Process list is now empty...\n");
-				exit(0);
-			}
-			p = p_list->head;
-		}
+            printf("Next process name: %s Cpid %d.\n",
+                    p->name, p->cpid);
+            kill(p->gpid, SIGCONT);
+            alarm(SCHED_TQ_SEC);
+        } else {
+            if (WIFEXITED(status) || WIFSIGNALED(status)) {
+                process* affected = get_proc_by_pid(p_list, pid);
+                if (affected != NULL) {
+                    printf("\n%s with local id %d was  killed by terminal maybe!!!\n", affected->name, affected->cpid);
+                    affected = erase_proc_by_pid(p_list, pid);
+                    free_process(affected);
+                    if (empty(p_list)) {
+                        printf ("Process list is now empty...\n");
+                        exit(0);
+                    }
+                } else {
+                    printf("GIATI NA EINAI NULL GAMWWWWWWWWWWW?");
+                }
+            }
+        }
 
-		printf("Next process name: %s Cpid %d.\n",
-                p->name, p->cpid);
-
-        // It's the turn of next process to continue
-		kill (p->gpid, SIGCONT);
-		alarm (SCHED_TQ_SEC);
-	} else {
-        /* Handle the case that a different than the head process
-         * has changed status
-         */
-		printf("A process other than the head has changed status.\n");
-        printf("HEAD pid: %ld, but pid: %d\n", p_list->head->gpid, pid);
-		process *pr = erase_proc_by_pid(p_list, pid);
-
-		free_process(pr);
-	}
+    }
 }
 
 /* Disable delivery of SIGALRM and SIGCHLD. */
@@ -203,17 +221,21 @@ install_signal_handlers(void)
 	sigset_t sigset;
 	struct sigaction sa;
 
-	sa.sa_handler = sigchld_handler;
 	sa.sa_flags = SA_RESTART;
+
+    // Specify signals to be blocked while the handling funvtion runs
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGCHLD);
 	sigaddset(&sigset, SIGALRM);
 	sa.sa_mask = sigset;
+
+	sa.sa_handler = sigchld_handler;
 	if (sigaction(SIGCHLD, &sa, NULL) < 0) {
 		perror("sigaction: sigchld");
 		exit(1);
 	}
 
+    // TODO In exercise the sa handler was reassigned, does it work?
 	sa.sa_handler = sigalrm_handler;
 	if (sigaction(SIGALRM, &sa, NULL) < 0) {
 		perror("sigaction: sigalrm");
@@ -282,10 +304,12 @@ sched_create_shell(char *executable, int *request_fd, int *return_fd)
 		assert(0);
 	}
 	/* Parent */
-	process *proc = process_create((long)p, executable);
+	process *proc = process_create(p, executable);
+    push(p_list, proc);
     printf("Created process: SHELL: %s with pid: %ld\n",
             executable, (long)p);
-    push(p_list, proc);
+	wait_for_ready_children(1);
+
 	close(pfds_rq[1]);
 	close(pfds_ret[0]);
 
@@ -329,8 +353,8 @@ int main(int argc, char *argv[])
     p_list = initialize_empty_list();
 
 	/* Create the shell. */
-	sched_create_shell(SHELL_EXECUTABLE_NAME, &request_fd, &return_fd);
 	/* TODO: add the shell to the scheduler's tasks */
+	sched_create_shell(SHELL_EXECUTABLE_NAME, &request_fd, &return_fd);
 
 	/*
 	 * For each of argv[1] to argv[argc - 1],
@@ -348,7 +372,6 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 		if (pid == 0) {
-            printf("test");
 			raise(SIGSTOP);
 			char filepath[TASK_NAME_SZ];
 			sprintf(filepath, "./%s", argv[i]);
@@ -360,7 +383,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		process *p = process_create((long)pid, argv[i]);
+		process *p = process_create(pid, argv[i]);
 		push(p_list, p);
 		printf("Process name: %s Cpid: %d is created.\n",
             argv[i], p->cpid);
@@ -378,11 +401,12 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	shell_request_loop(request_fd, return_fd);
 
 	printf("Scheduler dispatching the first process...\n");
 	kill(p_list->head->gpid, SIGCONT);
 	alarm(SCHED_TQ_SEC);
+
+	shell_request_loop(request_fd, return_fd);
 
 	/* Now that the shell is gone, just loop forever
 	 * until we exit from inside a signal handler.

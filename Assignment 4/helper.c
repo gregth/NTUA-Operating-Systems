@@ -13,8 +13,8 @@ process *process_create(pid_t pid, const char *name) {
 
 	// Strdup allocates memory and copies string
 	new_process->name = strdup(name);
-	new_process->gpid = pid;
-	new_process->cpid = id++;
+	new_process->pid = pid;
+	new_process->id = id++;
 	new_process->next = NULL;
 	return new_process;
 }
@@ -68,17 +68,17 @@ process * erase_proc_by_id(process_list * l, int id) {
 	if (empty(l))
 		return NULL;
 
-	if (l->head->cpid == id)
+	if (l->head->id == id)
 		return pop(l);
 
 	process* temp;
 	temp = l->head;
 	temp = temp->next;
 
-	while (temp->cpid != id && temp != l->tail)
+	while (temp->id != id && temp != l->tail)
 		 temp = temp->next;
 
-	if (temp->cpid == id) {
+	if (temp->id == id) {
 		process * ret = temp;
 		l->size--;
 		temp = temp->next;
@@ -94,16 +94,17 @@ process* get_proc_by_pid(process_list * l, int id) {
 	if (empty(l))
 		return NULL;
 
-	if (l->head->gpid == id)
+	if (l->head->pid == id)
 		 return l->head;
 
 	process * temp;
 	temp = l->head;
 
-	while (temp->next->gpid != id && temp->next != l->tail)
+	while (temp->next->pid != id && temp->next != l->tail) {
 		 temp = temp->next;
+    }
 
-	if (temp->next->gpid == id) {
+	if (temp->next->pid == id) {
 		return temp->next;
 	}
 
@@ -114,16 +115,16 @@ process* get_proc_by_id(process_list * l, int id) {
 	if (empty(l))
 		return NULL;
 
-	if (l->head->cpid == id)
+	if (l->head->id == id)
 		 return l->head;
 
 	process * temp;
 	temp = l->head;
 
-	while (temp->next->cpid != id && temp->next != l->tail)
+	while (temp->next->id != id && temp->next != l->tail)
 		 temp = temp->next;
 
-	if (temp->next->cpid == id) {
+	if (temp->next->id == id) {
 		return temp->next;
 	}
 
@@ -134,16 +135,16 @@ process* erase_proc_by_pid(process_list * l, int id) {
 	if (empty(l))
 		return NULL;
 
-	if (l->head->gpid == id)
+	if (l->head->pid == id)
 		 return pop(l);
 
 	process * temp;
 	temp = l->head;
 
-	while (temp->next->gpid != id && temp->next != l->tail)
+	while (temp->next->pid != id && temp->next != l->tail)
 		 temp = temp->next;
 
-	if (temp->next->gpid == id) {
+	if (temp->next->pid == id) {
 		process * ret = temp->next;
 		l->size--;
 		temp->next = temp->next->next;
@@ -194,9 +195,9 @@ void print_list(process_list* l) {
     process* tmp = l->head;
     printf("\n\nNOW PRINTING THE LIST\n");
     while (tmp != l->tail) {
-        printf("--> pid: %ld, name: %s\n", (long)tmp->gpid, tmp->name);
+        printf("--> pid: %ld, id: %d,  name: %s\n", (long)tmp->pid, tmp->id, tmp->name);
         tmp = tmp->next;
     }
-    printf("--> pid: %ld, name: %s\n", (long)tmp->gpid, tmp->name);
+        printf("--> pid: %ld, id: %d,  name: %s\n", (long)tmp->pid, tmp->id, tmp->name);
     printf("END OF THE LIST\n\n");
 }

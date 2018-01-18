@@ -4,8 +4,8 @@
 #include <unistd.h>
 #include <stddef.h>
 typedef struct process_type {
-    pid_t gpid;
-    int cpid;
+    pid_t pid;
+    int id;
     char * name;
     struct process_type * next;
 } process;

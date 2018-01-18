@@ -25,9 +25,9 @@ process_list* p_list;
 static void
 sigalrm_handler(int signum)
 {
-	printf("Going to stop process with cpid: %d\n", p_list->head->cpid);
+	printf("Going to stop process with id: %d\n", p_list->head->id);
 	// assert(0 && "Please fill me!");
-	kill(p_list->head->gpid, SIGSTOP);
+	kill(p_list->head->pid, SIGSTOP);
 }
 
 /*
@@ -42,20 +42,20 @@ sigchld_handler(int signum)
     pid = waitpid(-1, &status, WUNTRACED);
 
     // Check if head process changed status
-	if (pid == p_list->head->gpid) {
+	if (pid == p_list->head->pid) {
 		process *p;
 
         // Process has stopped
 		if (WIFSTOPPED(status)) {
-			printf ("Process name: %s  Cpid: %d has been stopped.\n",
-                    p_list->head->name, p_list->head->cpid);
+			printf ("Process name: %s  id: %d has been stopped.\n",
+                    p_list->head->name, p_list->head->id);
 
 			p = get_next(p_list);
 
         // Process has exited
 		} else if (WIFEXITED(status)) {
-			printf("Process name: %s  Cpid %d has been exited.\n",
-                    p_list->head->name, p_list->head->cpid);
+			printf("Process name: %s  id %d has been exited.\n",
+                    p_list->head->name, p_list->head->id);
 
 			p = pop(p_list);
 			free_process(p);
@@ -66,8 +66,8 @@ sigchld_handler(int signum)
 			p = p_list->head;
 		}
 		else {
-			printf("Process name: %s  Cpid %d has exited unexpectedly.\n",
-                    p_list->head->name, p_list->head->cpid);
+			printf("Process name: %s  id %d has exited unexpectedly.\n",
+                    p_list->head->name, p_list->head->id);
 
 			p = pop(p_list);
 			free_process(p);
@@ -78,11 +78,11 @@ sigchld_handler(int signum)
 			p = p_list->head;
 		}
 
-		printf("Next process name: %s Cpid %d.\n",
-                p->name, p->cpid);
+		printf("Next process name: %s id %d.\n",
+                p->name, p->id);
 
         // It's the turn of next process to continue
-		kill (p->gpid, SIGCONT);
+		kill (p->pid, SIGCONT);
 		alarm (SCHED_TQ_SEC);
 	} else {
         /* Handle the case that a different than the head process
@@ -184,8 +184,8 @@ int main(int argc, char *argv[])
 
 		process *p = process_create(pid, argv[i]);
 		push(p_list, p);
-		printf("Process name: %s Cpid: %d is created.\n",
-            argv[i], p->cpid);
+		printf("Process name: %s id: %d is created.\n",
+            argv[i], p->id);
 	}
 
 	/* Wait for all children to raise SIGSTOP before exec()ing. */
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
 	install_signal_handlers();
 
 	printf("Scheduler dispatching the first process...\n");
-	kill(p_list->head->gpid, SIGCONT);
+	kill(p_list->head->pid, SIGCONT);
 	alarm(SCHED_TQ_SEC);
 
 	/* loop forever  until we exit from inside a signal handler. */

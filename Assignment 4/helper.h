@@ -22,7 +22,7 @@ int empty(process_list * l);
 
 process * pop(process_list * l);
 
-void push(process_list * l, process * n);
+int push(process_list * l, process * n);
 
 process* get_proc_by_pid(process_list * l, int id);
 
@@ -57,4 +57,11 @@ process* get_proc_by_id_list(process_list * l, process_list * h, int id);
 process * erase_proc_by_id_list(process_list * l, process_list * h, int id);
 
 process * erase_proc_by_pid_list(process_list * l, process_list * h, int id);
+
+int move_from_to(process_list* a, process_list* b, int id);
+
+void red();
+void yellow();
+void green();
+void reset();
 #endif

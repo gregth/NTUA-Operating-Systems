@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
 #include "helper.h"
 
 process *process_create(pid_t pid, const char *name) {
@@ -198,6 +201,68 @@ void print_list(process_list* l) {
         printf("--> pid: %ld, id: %d,  name: %s\n", (long)tmp->pid, tmp->id, tmp->name);
         tmp = tmp->next;
     }
-    printf("--> pid: %ld, id: %d,  name: %s\n", (long)tmp->pid, tmp->id, tmp->name);
+    if (tmp != NULL) {
+        printf("--> pid: %ld, id: %d,  name: %s\n", (long)tmp->pid, tmp->id, tmp->name);
+    }
     printf("END OF THE LIST\n\n");
+}
+
+process* get_head_of_lists(process_list* l, process_list* h) {
+    if (!empty(h)) {
+        return h->head;
+    } else {
+        return l->head;
+    }
+}
+
+int empty_lists(process_list* l, process_list* h) {
+    return (empty(l) && empty(h));
+}
+
+process* get_next_lists(process_list* l, process_list* h) {
+    if (!empty(h)) {
+        get_next(h);
+    } else {
+        get_next(l);
+    }
+}
+
+process* pop_list(process_list* l, process_list* h) {
+    if (!empty(h)) {
+        return pop(h);
+    } else {
+        return pop(l);
+    }
+}
+
+process* get_proc_by_pid_list(process_list* l, process_list* h, int id) {
+    process* res =  get_proc_by_pid(h, id);
+    if (res == NULL) {
+        res = get_proc_by_pid(l, id);
+    }
+    return res;
+}
+
+process* get_proc_by_id_list(process_list* l, process_list* h, int id) {
+    process* res =  get_proc_by_id(h, id);
+    if (res == NULL) {
+        res = get_proc_by_id(l, id);
+    }
+    return res;
+}
+
+process* erase_proc_by_id_list(process_list* l, process_list* h, int id) {
+    process* res =  erase_proc_by_id(h, id);
+    if (res == NULL) {
+        res = erase_proc_by_id(l, id);
+    }
+    return res;
+}
+
+process* erase_proc_by_pid_list(process_list* l, process_list* h, int id) {
+    process* res =  erase_proc_by_pid(h, id);
+    if (res == NULL) {
+        res = erase_proc_by_pid(l, id);
+    }
+    return res;
 }

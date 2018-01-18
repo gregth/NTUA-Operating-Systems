@@ -41,4 +41,20 @@ process_list* initialize_empty_list(void);
 void free_process(process* p);
 
 void print_list(process_list* l);
+
+int empty_lists(process_list* l, process_list* h);
+
+process* get_head_of_lists(process_list* l, process_list* h);
+
+process* get_next_lists(process_list* l, process_list* h);
+
+process* pop_list(process_list* l, process_list* h);
+
+process* get_proc_by_pid_list(process_list * l, process_list * h, int id);
+
+process* get_proc_by_id_list(process_list * l, process_list * h, int id);
+
+process * erase_proc_by_id_list(process_list * l, process_list * h, int id);
+
+process * erase_proc_by_pid_list(process_list * l, process_list * h, int id);
 #endif

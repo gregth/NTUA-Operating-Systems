@@ -25,8 +25,8 @@ process_list* p_list;
 static void
 sigalrm_handler(int signum)
 {
-	printf("Going to stop process with id: %d\n", p_list->head->id);
-	// assert(0 && "Please fill me!");
+	printf("\n***SCHEDULER: Going to stop process [id]: %d***\n",
+            p_list->head->id);
 	kill(p_list->head->pid, SIGSTOP);
 }
 
@@ -47,38 +47,37 @@ sigchld_handler(int signum)
 
         // Process has stopped
 		if (WIFSTOPPED(status)) {
-			printf ("Process name: %s  id: %d has been stopped.\n",
+			printf ("\n***SCHEDULER: STOPPED: Process [name]: %s  [id]: %d***\n",
                     p_list->head->name, p_list->head->id);
-
 			p = get_next(p_list);
 
         // Process has exited
 		} else if (WIFEXITED(status)) {
-			printf("Process name: %s  id %d has been exited.\n",
+			printf ("\n***SCHEDULER: EXITED: Process [name]: %s  [id]: %d***\n",
                     p_list->head->name, p_list->head->id);
 
 			p = pop(p_list);
 			free_process(p);
 			if (empty(p_list)) {
-				printf ("Process list is now empty...\n");
+			    printf ("\n***SCHEDULER: No more processes to schedule");
 				exit(0);
 			}
 			p = p_list->head;
 		}
 		else {
-			printf("Process name: %s  id %d has exited unexpectedly.\n",
+			printf ("\n***SCHEDULER: Changed state unexpectedely: Process [name]: %s  [id]: %d***\n",
                     p_list->head->name, p_list->head->id);
 
 			p = pop(p_list);
 			free_process(p);
 			if (empty(p_list)) {
-				printf ("Process list is now empty...\n");
+			    printf ("\n***SCHEDULER: No more processes to schedule");
 				exit(0);
 			}
 			p = p_list->head;
 		}
 
-		printf("Next process name: %s id %d.\n",
+		printf ("\n***SCHEDULER: Next process to continue: Process [name]: %s  [id]: %d***\n",
                 p->name, p->id);
 
         // It's the turn of next process to continue
@@ -88,10 +87,13 @@ sigchld_handler(int signum)
         /* Handle the case that a different than the head process
          * has changed status
          */
-		printf("A process other than the head has changed status.\n");
-		process *pr = erase_proc_by_pid(p_list, pid);
 
-		free_process(pr);
+        process *pr = erase_proc_by_pid(p_list, pid);
+        if (pr != NULL ) {
+            printf ("\n***SCHEDULER: A process other than the head has Changed state unexpectedely: Process [name]: %s  [id]: %d***\n",
+            pr->name, pr->id);
+            free_process(pr);
+        }
 	}
 }
 

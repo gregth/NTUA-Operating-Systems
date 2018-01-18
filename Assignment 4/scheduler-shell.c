@@ -8,6 +8,7 @@
 
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <stdbool.h>
 
 #include "proc-common.h"
 #include "request.h"
@@ -33,11 +34,14 @@ sched_print_tasks(void)
 static int
 sched_kill_task_by_id(int id)
 {
-    printf("\n\nNOW KILLING THE PROCESS: %d\n", id);
+    printf("\n\nATTEMPTING TO KILL THE PROCESS: %d\n", id);
     process* p = get_proc_by_id(p_list, id);
     if (p == NULL) {
-        return -ENOSYS;
+        printf("Process not exists ins scheduler list\n");
+        printf("END OF MESSAGE\n\n");
+        return 1;
     }
+    printf("Process found is scheduler's list, executing SIGKILL\n");
     kill(p->pid, SIGKILL);
     printf("END OF MESSAGE\n\n");
     return 0;
@@ -48,14 +52,13 @@ sched_kill_task_by_id(int id)
 static void
 sched_create_task(char *executable)
 {
-    printf("\n\nNOW CREATING THE PROCESS FOR: %s\n", executable);
+    printf("\n\nATTEMPING TO CREATE THE PROCESS FOR: %s\n", executable);
     pid_t pid = fork();
     if (pid < 0) {
         perror("fork");
         exit(1);
     }
     if (pid == 0) {
-        raise(SIGSTOP);
         char filepath[TASK_NAME_SZ];
         sprintf(filepath, "./%s", executable);
         // TODO
@@ -64,11 +67,11 @@ sched_create_task(char *executable)
             perror("execvp");
             exit(1);
         }
+        raise(SIGSTOP);
     }
-
     process *p = process_create(pid, executable);
     push(p_list, p);
-    printf("Process name: %s id: %d was succesfully created.\n",
+    printf("SCHEDULER: Process [name]: %s [id]: %d was succesfully created.\n",
         executable, p->id);
     printf("END OF MESSAGE\n\n");
 }
@@ -100,7 +103,8 @@ process_request(struct request_struct *rq)
 static void
 sigalrm_handler(int signum)
 {
-	printf("Going to stop process with pid: %d\n", p_list->head->id);
+	printf("\n***SCHEDULER: Going to stop process [id]: %d***\n",
+            p_list->head->id);
 	kill(p_list->head->pid, SIGSTOP);
 }
 
@@ -110,9 +114,9 @@ sigalrm_handler(int signum)
 static void
 sigchld_handler(int signum)
 {
+    bool pass_to_next = false;
     int status;
     pid_t pid;
-    //TODO Why wait -1?
     pid = waitpid(-1, &status, WUNTRACED | WNOHANG);
     if (pid < 0) {
         perror("waitpid");
@@ -121,62 +125,90 @@ sigchld_handler(int signum)
     if (pid != 0) {
 
         // Check if head process changed status
-        if (pid == p_list->head->pid) {
-            process *p;
+        process *p;
 
-            // Process has stopped
-            if (WIFSTOPPED(status)) {
-                printf ("Process name: %s  id: %d has been stopped.\n",
-                        p_list->head->name, p_list->head->id);
+        // Process has stopped
+        if (WIFSTOPPED(status)) {
+            if (pid == p_list->head->pid) {
+                printf ("\n***SCHEDULER: STOPPED: Current Process [name]: %s  [id]: %d***\n",
+                p_list->head->name, p_list->head->id);
                 p = get_next(p_list);
-
-            // Process has exited
-            } else if (WIFEXITED(status) || WIFSIGNALED(status)) {
-                printf("Process name: %s  id %d has been exited.\n",
-                        p_list->head->name, p_list->head->id);
-
-                p = pop(p_list);
-                free_process(p);
-                if (empty(p_list)) {
-                    printf ("Process list is now empty...\n");
-                    exit(0);
-                }
-                p = p_list->head;
-            }
-            else {
-                printf("Process name: %s  id %d has exited unexpectedly.\n",
-                        p_list->head->name, p_list->head->id);
-
-                p = pop(p_list);
-                free_process(p);
-                if (empty(p_list)) {
-                    printf ("Process list is now empty...\n");
-                    exit(0);
-                }
-                p = p_list->head;
-            }
-
-            printf("Next process name: %s id %d.\n",
-                    p->name, p->id);
-            kill(p->pid, SIGCONT);
-            alarm(SCHED_TQ_SEC);
-        } else {
-            if (WIFEXITED(status) || WIFSIGNALED(status)) {
+                pass_to_next = true;
+            } else {
                 process* affected = get_proc_by_pid(p_list, pid);
                 if (affected != NULL) {
-                    printf("\n%s with local id %d was  killed by terminal maybe!!!\n", affected->name, affected->id);
+                    printf ("\n***SCHEDULER: STOPPED: NOT current Process [name]: %s  [id]: %d***\n",
+                        affected->name, affected->id);
+                } else {
+                    printf("\n\nTHIS SHOULD NOT HAPPEN!\n\n\n");
+                }
+            }
+
+        // Process has exited
+        } else if (WIFEXITED(status)) {
+            if (pid == p_list->head->pid) {
+                printf ("\n***SCHEDULER: EXITED: Current Process [name]: %s  [id]: %d***\n",
+                p_list->head->name, p_list->head->id);
+                p = pop(p_list);
+                free_process(p);
+
+                if (empty(p_list)) {
+                    printf ("\n***SCHEDULER: No more processes to schedule");
+                    exit(0);
+                }
+                p = p_list->head;
+                pass_to_next = true;
+            } else {
+                process* affected = get_proc_by_pid(p_list, pid);
+                if (affected != NULL) {
+                    printf ("\n***SCHEDULER: EXITED: NOT Current Process [name]: %s  [id]: %d***\n",
+                            affected->name, affected->id);
+
                     affected = erase_proc_by_pid(p_list, pid);
                     free_process(affected);
-                    if (empty(p_list)) {
-                        printf ("Process list is now empty...\n");
-                        exit(0);
-                    }
                 } else {
-                    printf("GIATI NA EINAI NULL GAMWWWWWWWWWWW?");
+                    printf("\n\nTHIS SHOULD NOT HAPPEN!\n\n\n");
+                    exit(11);
+                }
+            }
+        } else if (WIFSIGNALED(status)) {
+            if (pid == p_list->head->pid) {
+                printf ("\n***SCHEDULER: GOT KILLED: Current Process [name]: %s  [id]: %d***\n",
+                p_list->head->name, p_list->head->id);
+                p = pop(p_list);
+                free_process(p);
+
+                if (empty(p_list)) {
+                    printf ("\n***SCHEDULER: No more processes to schedule");
+                    exit(0);
+                }
+                p = p_list->head;
+                pass_to_next = true;
+            } else {
+                process* affected = get_proc_by_pid(p_list, pid);
+                if (affected != NULL) {
+                    printf ("\n***SCHEDULER: GOT KILLED: NOT Current Process [name]: %s  [id]: %d***\n",
+                            affected->name, affected->id);
+
+                    affected = erase_proc_by_pid(p_list, pid);
+                    free_process(affected);
+                } else {
+                    printf("\n\nTHIS SHOULD NOT HAPPEN WHEN SIGNALED\n\n\n");
+                    exit(11);
                 }
             }
         }
+        else {
+            printf("Something really strange happened!\n");
+            exit(100);
+        }
 
+        if (pass_to_next) {
+            printf ("\n***SCHEDULER: Next process to continue: Process [name]: %s  [id]: %d***\n",
+                p->name, p->id);
+            kill(p->pid, SIGCONT);
+            alarm(SCHED_TQ_SEC);
+        }
     }
 }
 

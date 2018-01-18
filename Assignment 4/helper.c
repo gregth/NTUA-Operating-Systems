@@ -4,185 +4,185 @@
 #include "helper.h"
 
 process *process_create(pid_t pid, const char *name) {
-	static int id = 0;
-	process* new_process = (process*) malloc(sizeof(process));
-	if (new_process == NULL) {
-		printf("Memory allocation failed\n");
-		exit(1);
-	}
+    static int id = 0;
+    process* new_process = (process*) malloc(sizeof(process));
+    if (new_process == NULL) {
+        printf("Memory allocation failed\n");
+        exit(1);
+    }
 
-	// Strdup allocates memory and copies string
-	new_process->name = strdup(name);
-	new_process->pid = pid;
-	new_process->id = id++;
-	new_process->next = NULL;
-	return new_process;
+    // Strdup allocates memory and copies string
+    new_process->name = strdup(name);
+    new_process->pid = pid;
+    new_process->id = id++;
+    new_process->next = NULL;
+    return new_process;
 }
 
 int empty (process_list* list) {
-	if (list->head == NULL) {
-		 return 1;
-	} else {
-		return 0;
-	}
+    if (list->head == NULL) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 process* pop(process_list* list) {
-	if(empty(list)) {
-		printf("Empty list\n");
-		exit(1);
-	}
+    if(empty(list)) {
+        printf("Empty list\n");
+        exit(1);
+    }
 
-	process* temp;
-	if(list->head == list->tail) {
-		temp = list->head;
-		list->head =  NULL;
-		list->tail = NULL;
-		list->size = 0;
-		return temp;
-	} else {
-		temp = list->head;
-		list->head = list->head->next;
-		list->tail->next = list->head;
-		list->size--;
-		return temp;
-	}
+    process* temp;
+    if(list->head == list->tail) {
+        temp = list->head;
+        list->head =  NULL;
+        list->tail = NULL;
+        list->size = 0;
+        return temp;
+    } else {
+        temp = list->head;
+        list->head = list->head->next;
+        list->tail->next = list->head;
+        list->size--;
+        return temp;
+    }
 }
 
 void push(process_list* l, process* new_p) {
-	if (empty(l)) {
-		l->head = l->tail = new_p;
-		l->head->next = l->head;
-		l->size = 1;
-		return;
-	}
+    if (empty(l)) {
+        l->head = l->tail = new_p;
+        l->head->next = l->head;
+        l->size = 1;
+        return;
+    }
 
-	new_p->next = l->head;
-	l->tail->next = new_p;
-	l->tail = new_p;
-	l->size++;
-	return;
+    new_p->next = l->head;
+    l->tail->next = new_p;
+    l->tail = new_p;
+    l->size++;
+    return;
 }
 
 process * erase_proc_by_id(process_list * l, int id) {
-	if (empty(l))
-		return NULL;
+    if (empty(l))
+        return NULL;
 
-	if (l->head->id == id)
-		return pop(l);
+    if (l->head->id == id)
+        return pop(l);
 
-	process* temp;
-	temp = l->head;
-	temp = temp->next;
+    process* temp;
+    temp = l->head;
+    temp = temp->next;
 
-	while (temp->id != id && temp != l->tail)
-		 temp = temp->next;
+    while (temp->id != id && temp != l->tail)
+        temp = temp->next;
 
-	if (temp->id == id) {
-		process * ret = temp;
-		l->size--;
-		temp = temp->next;
-		if(ret == l->tail)
-			 l->tail = temp;
-		return ret;
-	}
+    if (temp->id == id) {
+        process * ret = temp;
+        l->size--;
+        temp = temp->next;
+        if(ret == l->tail)
+            l->tail = temp;
+        return ret;
+    }
 
-	return NULL;
+    return NULL;
 }
 
 process* get_proc_by_pid(process_list * l, int id) {
-	if (empty(l))
-		return NULL;
+    if (empty(l))
+        return NULL;
 
-	if (l->head->pid == id)
-		 return l->head;
+    if (l->head->pid == id)
+        return l->head;
 
-	process * temp;
-	temp = l->head;
+    process * temp;
+    temp = l->head;
 
-	while (temp->next->pid != id && temp->next != l->tail) {
-		 temp = temp->next;
+    while (temp->next->pid != id && temp->next != l->tail) {
+        temp = temp->next;
     }
 
-	if (temp->next->pid == id) {
-		return temp->next;
-	}
+    if (temp->next->pid == id) {
+        return temp->next;
+    }
 
-	return NULL;
+    return NULL;
 }
 
 process* get_proc_by_id(process_list * l, int id) {
-	if (empty(l))
-		return NULL;
+    if (empty(l))
+        return NULL;
 
-	if (l->head->id == id)
-		 return l->head;
+    if (l->head->id == id)
+        return l->head;
 
-	process * temp;
-	temp = l->head;
+    process * temp;
+    temp = l->head;
 
-	while (temp->next->id != id && temp->next != l->tail)
-		 temp = temp->next;
+    while (temp->next->id != id && temp->next != l->tail)
+        temp = temp->next;
 
-	if (temp->next->id == id) {
-		return temp->next;
-	}
+    if (temp->next->id == id) {
+        return temp->next;
+    }
 
-	return NULL;
+    return NULL;
 }
 
 process* erase_proc_by_pid(process_list * l, int id) {
-	if (empty(l))
-		return NULL;
+    if (empty(l))
+        return NULL;
 
-	if (l->head->pid == id)
-		 return pop(l);
+    if (l->head->pid == id)
+        return pop(l);
 
-	process * temp;
-	temp = l->head;
+    process * temp;
+    temp = l->head;
 
-	while (temp->next->pid != id && temp->next != l->tail)
-		 temp = temp->next;
+    while (temp->next->pid != id && temp->next != l->tail)
+        temp = temp->next;
 
-	if (temp->next->pid == id) {
-		process * ret = temp->next;
-		l->size--;
-		temp->next = temp->next->next;
-		if(ret == l->tail)
-			 l->tail = temp;
-		return ret;
-	}
+    if (temp->next->pid == id) {
+        process * ret = temp->next;
+        l->size--;
+        temp->next = temp->next->next;
+        if(ret == l->tail)
+            l->tail = temp;
+        return ret;
+    }
 
-	return NULL;
+    return NULL;
 }
 
 process* get_next(process_list * l) {
-	if(empty(l)) {
-		printf("Empty list\n");
-		exit(1);
-	}
+    if(empty(l)) {
+        printf("Empty list\n");
+        exit(1);
+    }
 
-	l->tail = l->head;
-	l->head = l->head->next;
-	return l->head;
+    l->tail = l->head;
+    l->head = l->head->next;
+    return l->head;
 }
 
 void clear(process_list * l) {
-	process * i;
-	while(!empty(l)) {
-		i = pop(l);
-		free(i->name);
-		free(i);
-	}
+    process * i;
+    while(!empty(l)) {
+        i = pop(l);
+        free(i->name);
+        free(i);
+    }
 }
 
 process_list* initialize_empty_list(void) {
     // Initialize an empty list
     process_list* p_list;
-	p_list = (process_list *) malloc (sizeof(process_list));
-	p_list->head = NULL;
-	p_list->tail = NULL;
-	p_list->size = 0;
+    p_list = (process_list *) malloc (sizeof(process_list));
+    p_list->head = NULL;
+    p_list->tail = NULL;
+    p_list->size = 0;
     return p_list;
 }
 
@@ -198,6 +198,6 @@ void print_list(process_list* l) {
         printf("--> pid: %ld, id: %d,  name: %s\n", (long)tmp->pid, tmp->id, tmp->name);
         tmp = tmp->next;
     }
-        printf("--> pid: %ld, id: %d,  name: %s\n", (long)tmp->pid, tmp->id, tmp->name);
+    printf("--> pid: %ld, id: %d,  name: %s\n", (long)tmp->pid, tmp->id, tmp->name);
     printf("END OF THE LIST\n\n");
 }

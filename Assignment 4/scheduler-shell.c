@@ -128,109 +128,114 @@ sigchld_handler(int signum)
     bool pass_to_next = false;
     int status;
     pid_t pid;
-    pid = waitpid(-1, &status, WUNTRACED | WNOHANG);
-    if (pid < 0) {
-        perror("waitpid");
-        exit(1);
-    }
-    if (pid != 0) {
-
-        // Check if head process changed status
-        process *p;
-        red();
-
-        // Process has stopped
-        if (WIFSTOPPED(status)) {
-            if (pid == (current_p->pid)) {
-                red();
-                printf ("*** SCHEDULER: STOPPED: Current Process [name]: %s  [id]: %d\n",
-                    current_p->name, current_p->id);
-                reset();
-                p = get_next(l);
-                pass_to_next = true;
-            } else {
-                process* affected = get_proc_by_pid(l, pid);
-                if (affected != NULL) {
-                    red();
-                    printf ("*** SCHEDULER: STOPPED: NOT current Process [name]: %s  [id]: %d\n",
-                        affected->name, affected->id);
-                    reset();
-                } else {
-                    perror("\nTHIS SHOULD !NOT HAPPEN!\n");
-                }
-            }
-
-        // Process has exited
-        } else if (WIFEXITED(status)) {
-            if (pid == (current_p->pid)) {
-                printf ("*** SCHEDULER: EXITED: Current Process [name]: %s  [id]: %d\n",
-                current_p->name, current_p->id);
-                erase_proc_by_id(l, current_p->id);
-                free_process(current_p);
-
-                if (empty(l)) {
-                    printf ("*** SCHEDULER: No more processes to schedule. Cleaning and exiting...\n");
-                    exit(0);
-                }
-                p = l->head;
-                pass_to_next = true;
-
-            } else {
-                process* affected = get_proc_by_pid(l, pid);
-                if (affected != NULL) {
-                    printf ("*** SCHEDULER: EXITED: NOT Current Process [name]: %s  [id]: %d\n",
-                            affected->name, affected->id);
-
-                    affected = erase_proc_by_pid(l, pid);
-                    free_process(affected);
-                } else {
-                    perror("\n\nTHIS SHOULD NOT HAPPEN!\n\n\n");
-                    exit(11);
-                }
-            }
-        } else if (WIFSIGNALED(status)) {
-            if (pid == (current_p->pid)) {
-                printf ("*** SCHEDULER: GOT KILLED: Current Process [name]: %s  [id]: %d\n",
-                current_p->name, current_p->id);
-                p = pop(l);
-                free_process(p);
-
-                if (empty(l)) {
-                    printf ("*** SCHEDULER: No more processes to schedule. Cleaning and exiting...\n");
-                    exit(0);
-                }
-
-                p = l->head;
-                pass_to_next = true;
-            } else {
-                process* affected = get_proc_by_pid(l, pid);
-                if (affected != NULL) {
-                    printf ("*** SCHEDULER: GOT KILLED: NOT Current Process [name]: %s  [id]: %d\n",
-                            affected->name, affected->id);
-
-                    affected = erase_proc_by_pid(l, pid);
-                    free_process(affected);
-                } else {
-                    printf("\n\nTHIS SHOULD NOT HAPPEN WHEN SIGNALED\n\n\n");
-                    exit(11);
-                }
-            }
-            reset();
+    for (;;) {
+        pid = waitpid(-1, &status, WUNTRACED | WNOHANG);
+        if (pid == 0) {
+            break;
         }
-        else {
+        if (pid < 0) {
+            perror("waitpid");
+            exit(1);
+        }
+        if (pid != 0) {
+
+            // Check if head process changed status
+            process *p;
             red();
-            printf("Something really strange happened!\n");
-            reset();
-            exit(100);
-        }
-        reset();
 
-        if (pass_to_next) {
-            printf ("*** SCHEDULER: Next process to continue: [name]: %s  [id]: %d\n\n",
-                p->name, p->id);
-            current_p = p;
-            kill(p->pid, SIGCONT);
-            alarm(SCHED_TQ_SEC);
+            // Process has stopped
+            if (WIFSTOPPED(status)) {
+                if (pid == (current_p->pid)) {
+                    red();
+                    printf ("*** SCHEDULER: STOPPED: Current Process [name]: %s  [id]: %d\n",
+                        current_p->name, current_p->id);
+                    reset();
+                    p = get_next(l);
+                    pass_to_next = true;
+                } else {
+                    process* affected = get_proc_by_pid(l, pid);
+                    if (affected != NULL) {
+                        red();
+                        printf ("*** SCHEDULER: STOPPED: NOT current Process [name]: %s  [id]: %d\n",
+                            affected->name, affected->id);
+                        reset();
+                    } else {
+                        perror("\nTHIS SHOULD !NOT HAPPEN!\n");
+                    }
+                }
+
+            // Process has exited
+            } else if (WIFEXITED(status)) {
+                if (pid == (current_p->pid)) {
+                    printf ("*** SCHEDULER: EXITED: Current Process [name]: %s  [id]: %d\n",
+                    current_p->name, current_p->id);
+                    erase_proc_by_id(l, current_p->id);
+                    free_process(current_p);
+
+                    if (empty(l)) {
+                        printf ("*** SCHEDULER: No more processes to schedule. Cleaning and exiting...\n");
+                        exit(0);
+                    }
+                    p = l->head;
+                    pass_to_next = true;
+
+                } else {
+                    process* affected = get_proc_by_pid(l, pid);
+                    if (affected != NULL) {
+                        printf ("*** SCHEDULER: EXITED: NOT Current Process [name]: %s  [id]: %d\n",
+                                affected->name, affected->id);
+
+                        affected = erase_proc_by_pid(l, pid);
+                        free_process(affected);
+                    } else {
+                        perror("\n\nTHIS SHOULD NOT HAPPEN!\n\n\n");
+                        exit(11);
+                    }
+                }
+            } else if (WIFSIGNALED(status)) {
+                if (pid == (current_p->pid)) {
+                    printf ("*** SCHEDULER: GOT KILLED: Current Process [name]: %s  [id]: %d\n",
+                    current_p->name, current_p->id);
+                    p = pop(l);
+                    free_process(p);
+
+                    if (empty(l)) {
+                        printf ("*** SCHEDULER: No more processes to schedule. Cleaning and exiting...\n");
+                        exit(0);
+                    }
+
+                    p = l->head;
+                    pass_to_next = true;
+                } else {
+                    process* affected = get_proc_by_pid(l, pid);
+                    if (affected != NULL) {
+                        printf ("*** SCHEDULER: GOT KILLED: NOT Current Process [name]: %s  [id]: %d\n",
+                                affected->name, affected->id);
+
+                        affected = erase_proc_by_pid(l, pid);
+                        free_process(affected);
+                    } else {
+                        printf("\n\nTHIS SHOULD NOT HAPPEN WHEN SIGNALED\n\n\n");
+                        exit(11);
+                    }
+                }
+                reset();
+            }
+            else {
+                red();
+                printf("Something really strange happened!\n");
+                reset();
+                exit(100);
+            }
+            reset();
+
+            if (pass_to_next) {
+                printf ("*** SCHEDULER: Next process to continue: [name]: %s  [id]: %d\n\n",
+                    p->name, p->id);
+                current_p = p;
+                kill(p->pid, SIGCONT);
+                alarm(SCHED_TQ_SEC);
+            }
         }
     }
 }

@@ -38,65 +38,73 @@ sigchld_handler(int signum)
 {
     int status;
     pid_t pid;
-    //TODO Why wait -1?
-    pid = waitpid(-1, &status, WUNTRACED | WNOHANG);
 
-    // Check if head process changed status
-    if (pid < 0) {
-        perror("waitpid < 0");
-        exit(1);
-    } else if (pid > 0) {
-        if (pid == p_list->head->pid) {
-            process *p;
+    for (;;) {
+        pid = waitpid(-1, &status, WUNTRACED | WNOHANG);
 
-            // Process has stopped
-            if (WIFSTOPPED(status)) {
-                printf ("*** SCHEDULER: STOPPED: Process [name]: %s  [id]: %d\n",
-                        p_list->head->name, p_list->head->id);
-                p = get_next(p_list);
+        // Check if head process changed status
+        if (pid < 0) {
+            perror("waitpid < 0");
+            exit(1);
+        } else if (pid == 0) {
+            break;
+        } else if (pid > 0) {
+            if (pid == p_list->head->pid) {
+                process *p;
 
-            // Process has exited
-            } else if (WIFEXITED(status)) {
-                printf ("*** SCHEDULER: EXITED: Process [name]: %s  [id]: %d\n",
-                        p_list->head->name, p_list->head->id);
+                // Process has stopped
+                if (WIFSTOPPED(status)) {
+                    printf ("*** SCHEDULER: STOPPED: Process [name]: %s  [id]: %d\n",
+                            p_list->head->name, p_list->head->id);
+                    p = get_next(p_list);
 
-                p = pop(p_list);
-                free_process(p);
-                if (empty(p_list)) {
-                    printf ("\n***SCHEDULER: No more processes to schedule");
-                    exit(0);
+                // Process has exited
+                } else if (WIFEXITED(status)) {
+                    printf ("*** SCHEDULER: EXITED: Process [name]: %s  [id]: %d\n",
+                            p_list->head->name, p_list->head->id);
+
+                    p = pop(p_list);
+                    free_process(p);
+                    if (empty(p_list)) {
+                        printf ("\n***SCHEDULER: No more processes to schedule");
+                        exit(0);
+                    }
+                    p = p_list->head;
                 }
-                p = p_list->head;
-            }
-            else {
-                printf ("*** SCHEDULER: Changed state unexpectedely: Process [name]: %s  [id]: %d\n",
-                        p_list->head->name, p_list->head->id);
+                else if (WIFSIGNALED(status)) {
+                    printf ("*** SCHEDULER: Child killed by signal: Process [name]: %s  [id]: %d\n",
+                            p_list->head->name, p_list->head->id);
 
-                p = pop(p_list);
-                free_process(p);
-                if (empty(p_list)) {
-                    printf ("*** SCHEDULER: No more processes to schedule");
-                    exit(0);
+                    p = pop(p_list);
+                    free_process(p);
+                    if (empty(p_list)) {
+                        printf ("*** SCHEDULER: No more processes to schedule");
+                        exit(0);
+                    }
+                    p = p_list->head;
+                } else {
+                    printf ("*** SCHEDULER: Something strange happened with: Process [name]: %s  [id]: %d\n",
+                            p_list->head->name, p_list->head->id);
+                            exit(1);
                 }
-                p = p_list->head;
-            }
 
-            printf ("*** SCHEDULER: Next process to continue: Process [name]: %s  [id]: %d\n\n",
-                    p->name, p->id);
+                printf ("*** SCHEDULER: Next process to continue: Process [name]: %s  [id]: %d\n\n",
+                        p->name, p->id);
 
-            // It's the turn of next process to continue
-            kill (p->pid, SIGCONT);
-            alarm (SCHED_TQ_SEC);
-        } else {
-            /* Handle the case that a different than the head process
-             * has changed status
-             */
+                // It's the turn of next process to continue
+                kill (p->pid, SIGCONT);
+                alarm (SCHED_TQ_SEC);
+            } else {
+                /* Handle the case that a different than the head process
+                 * has changed status
+                 */
 
-            process *pr = erase_proc_by_pid(p_list, pid);
-            if (pr != NULL ) {
-                printf ("*** SCHEDULER: A process other than the head has Changed state unexpectedely: Process [name]: %s  [id]: %d\n",
-                pr->name, pr->id);
-                free_process(pr);
+                process *pr = erase_proc_by_pid(p_list, pid);
+                if (pr != NULL ) {
+                    printf ("*** SCHEDULER: A process other than the head has Changed state unexpectedely: Process [name]: %s  [id]: %d\n",
+                    pr->name, pr->id);
+                    free_process(pr);
+                }
             }
         }
     }

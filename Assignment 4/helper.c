@@ -128,7 +128,7 @@ process* get_proc_by_pid(process_list * l, int id) {
     if (empty(l))
         return NULL;
 
-    if (l->head->id == id)
+    if (l->head->pid == id)
         return l->head;
 
     process * temp;

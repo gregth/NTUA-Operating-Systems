@@ -40,7 +40,7 @@ process_list* initialize_empty_list(void);
 
 void free_process(process* p);
 
-void print_list(process_list* l);
+void print_list(process_list* l, process* current_p);
 
 int empty_lists(process_list* l, process_list* h);
 

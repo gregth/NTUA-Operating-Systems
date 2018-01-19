@@ -26,7 +26,7 @@ static void
 sched_print_tasks(void)
 {
     printf("\n***THE LIST***");
-    print_list(l);
+    print_list(l, current_p);
 }
 
 /* Send SIGKILL to a task determined by the value of its
@@ -124,6 +124,7 @@ sigalrm_handler(int signum)
 static void
 sigchld_handler(int signum)
 {
+    printf("Signum: %d, pid: %ld\n", signum, (long)getpid());
     bool pass_to_next = false;
     int status;
     pid_t pid;

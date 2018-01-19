@@ -216,17 +216,23 @@ void free_process(process* p) {
     free(p);
 }
 
-void print_list(process_list* l) {
+void print_list(process_list* l, process* current_p) {
     process* tmp = l->head;
     printf("\n*************************************\n");
     if (empty(l)) {
         printf("Empty list\n");
     } else {
         while (tmp != l->tail) {
+            if (tmp->id == current_p->id) {
+                printf("CURRENT:");
+            }
             printf("--> pid: %ld, id: %d,  name: %s\n", (long)tmp->pid, tmp->id, tmp->name);
             tmp = tmp->next;
         }
         if (tmp != NULL) {
+            if (tmp->id == current_p->id) {
+                printf("CURRENT:");
+            }
             printf("--> pid: %ld, id: %d,  name: %s\n", (long)tmp->pid, tmp->id, tmp->name);
         }
     }

@@ -27,9 +27,9 @@ static void
 sched_print_tasks(void)
 {
     printf("\n***LOW LIST***");
-    print_list(l_list);
+    print_list(l_list, current_p);
     printf("\n***HIGH LIST***");
-    print_list(h_list);
+    print_list(h_list, current_p);
 }
 
 /* Send SIGKILL to a task determined by the value of its
